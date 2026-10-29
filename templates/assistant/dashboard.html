@@ -1,0 +1,151 @@
+{% extends "assistant/base.html" %}
+
+{% block title %}Dashboard — Lead Research & Qualification{% endblock %}
+{% block header_title %}Analytics & Intelligence{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; font-weight: 800;">Lead Qualification Pipeline</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Live research summary, target fit classification, and evidence-grounded outreach.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{% url 'lead_create' %}" class="btn btn-primary">
+      <i class="bi bi-search"></i> Research New Company
+    </a>
+    <a href="{% url 'export_csv' %}" class="btn btn-secondary">
+      <i class="bi bi-download"></i> Export Leads
+    </a>
+  </div>
+</div>
+
+<!-- Stats Counters -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background: #eef2ff; color: var(--primary);">
+      <i class="bi bi-buildings"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Total Analyzed</div>
+      <div style="font-size: 1.6rem; font-weight: 800;">{{ total_leads }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: var(--success-bg); color: var(--success);">
+      <i class="bi bi-patch-check-fill"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Strong ICP Fit</div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #047857;">{{ strong_fits }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: var(--warning-bg); color: var(--warning);">
+      <i class="bi bi-exclamation-circle-fill"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Moderate Fit</div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #b45309;">{{ moderate_fits }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: var(--danger-bg); color: var(--danger);">
+      <i class="bi bi-x-circle-fill"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Disqualified / Low</div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #b91c1c;">{{ disqualified|add:low_fits }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Leads Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Recently Researched Companies</h3>
+    <a href="{% url 'lead_list' %}" class="btn btn-secondary btn-sm">View All Leads ({{ total_leads }})</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Website & Industry</th>
+          <th>ICP Fit</th>
+          <th>Score</th>
+          <th>Supplied Contact</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in recent_leads %}
+          <tr>
+            <td>
+              <a href="{% url 'lead_detail' lead.pk %}" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
+                {{ lead.company_name }}
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                {{ lead.target_market|default:"Market Pending" }}
+              </div>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem;">
+                <a href="{{ lead.website_url }}" target="_blank" rel="noopener" style="color: var(--secondary);">
+                  <i class="bi bi-box-arrow-up-right"></i> {{ lead.website_url|truncatechars:35 }}
+                </a>
+              </div>
+              <span class="badge" style="background: var(--neutral-bg); color: var(--text-muted); margin-top: 0.3rem;">
+                {{ lead.detected_industry|default:"Unclassified" }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-{{ lead.icp_fit_level }}">
+                {{ lead.get_icp_fit_level_display }}
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <strong style="font-size: 0.95rem;">{{ lead.icp_fit_score }}%</strong>
+              </div>
+            </td>
+            <td>
+              {% if lead.supplied_contact_name %}
+                <div style="font-weight: 600; font-size: 0.85rem;">{{ lead.supplied_contact_name }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ lead.supplied_contact_role|default:"Role not supplied" }}</div>
+              {% else %}
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">No person supplied (Team outreach)</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.4rem;">
+                <a href="{% url 'lead_detail' lead.pk %}" class="btn btn-secondary btn-sm" title="View Dossier">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <a href="{% url 'lead_research' lead.pk %}" class="btn btn-secondary btn-sm" title="Re-run Scrape & Analysis">
+                  <i class="bi bi-arrow-repeat"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 3rem 1rem;">
+              <i class="bi bi-search" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block;"></i>
+              <div style="font-weight: 700; font-size: 1.1rem;">No leads analyzed yet</div>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">Enter a company website to perform live web research, qualification, and outreach drafting.</p>
+              <a href="{% url 'lead_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Research First Company
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

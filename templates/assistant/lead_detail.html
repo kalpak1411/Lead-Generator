@@ -1,0 +1,199 @@
+{% extends "assistant/base.html" %}
+
+{% block title %}{{ lead.company_name }} — Lead Research Dossier{% endblock %}
+{% block header_title %}Account Dossier{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+      <h1 style="font-size: 1.8rem; font-weight: 800; margin: 0;">{{ lead.company_name }}</h1>
+      <span class="badge badge-{{ lead.icp_fit_level }}">
+        {{ lead.get_icp_fit_level_display }} ({{ lead.icp_fit_score }}%)
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
+      <span>
+        <a href="{{ lead.website_url }}" target="_blank" rel="noopener" style="color: var(--secondary); font-weight: 600;">
+          <i class="bi bi-link-45deg"></i> {{ lead.website_url }}
+        </a>
+      </span>
+      <span><i class="bi bi-tag"></i> {{ lead.detected_industry|default:"Industry unclassified" }}</span>
+      <span><i class="bi bi-briefcase"></i> {{ lead.target_market|default:"Market unclassified" }}</span>
+      <span><i class="bi bi-clock-history"></i> Researched: {{ lead.last_researched_at|date:"M d, Y H:i"|default:"Pending" }}</span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{% url 'lead_research' lead.pk %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-arrow-repeat"></i> Re-Scrape & Qualify
+    </a>
+    <a href="{% url 'lead_list' %}" class="btn btn-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> All Leads
+    </a>
+  </div>
+</div>
+
+<!-- Grid: 2 Columns (Research & Summary vs Qualification & Outreach Angle) -->
+<div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.5rem; align-items: start;">
+  <!-- Left Column: Business Summary & Evidence Links -->
+  <div>
+    <!-- Business Summary Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-card-text" style="color: var(--primary); margin-right: 0.5rem;"></i>Business Summary</h3>
+        <span class="badge" style="background: var(--neutral-bg); color: var(--text-muted);">Verified Public Context</span>
+      </div>
+
+      <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); margin-bottom: 1.25rem;">
+        {{ lead.business_summary|default:"No business summary generated yet. Click 'Re-Scrape & Qualify' to run research." }}
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem;">
+          Core Offerings / Stated Capabilities:
+        </div>
+        <div style="font-size: 0.875rem; color: var(--text-main); font-weight: 500;">
+          {{ lead.core_products_services|default:"Capabilities pending extraction." }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence Links & Quote Verification Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-shield-check" style="color: var(--success); margin-right: 0.5rem;"></i>Evidence Links & Verifiable Claims</h3>
+        <span class="badge" style="background: var(--success-bg); color: #047857;">Ground Truth Citations</span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Exact quotes extracted directly from the company's public domain. Used to ground the outreach angle without fabricating claims.
+      </p>
+
+      {% if lead.evidence_links %}
+        {% for evidence in lead.evidence_links %}
+          <div class="evidence-quote-box">
+            "{{ evidence.quote }}"
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; font-style: normal; display: flex; justify-content: space-between;">
+              <span><i class="bi bi-link-45deg"></i> Source: <a href="{{ evidence.source_url }}" target="_blank" rel="noopener">{{ evidence.source_url|truncatechars:45 }}</a></span>
+              <span>{{ evidence.significance }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="font-size: 0.85rem; color: var(--text-muted); padding: 1rem 0;">
+          No evidence quotes recorded yet. Run research to extract verbatim passages from the site.
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Supplied Lead Information (Grounding Check) -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-person-badge" style="color: var(--secondary); margin-right: 0.5rem;"></i>Supplied Contact & Notes</h3>
+        <span class="badge" style="background: #e0f2fe; color: #0369a1;">Zero Personal Inventions</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Supplied Name:</span>
+          <strong>{{ lead.supplied_contact_name|default:"(None supplied - Team level)" }}</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Supplied Role:</span>
+          <strong>{{ lead.supplied_contact_role|default:"(None supplied)" }}</strong>
+        </div>
+      </div>
+
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Public Notes:</span>
+        <div style="background: var(--neutral-bg); padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-main);">
+          {{ lead.supplied_notes|default:"No public notes supplied." }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: ICP Qualification & Personalized Outreach Angle -->
+  <div>
+    <!-- Qualification Analysis Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-bullseye" style="color: var(--primary); margin-right: 0.5rem;"></i>ICP Qualification Fit</h3>
+        <span class="badge badge-{{ lead.icp_fit_level }}">{{ lead.get_icp_fit_level_display }}</span>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Evaluated against ICP: <strong>{{ lead.icp.name|default:"Default ICP" }}</strong>
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem;">
+          <span>Fit Score</span>
+          <span>{{ lead.icp_fit_score }}/100</span>
+        </div>
+        <div style="height: 8px; background: var(--neutral-bg); border-radius: 9999px; overflow: hidden;">
+          <div style="height: 100%; width: {{ lead.icp_fit_score }}%; background: {% if lead.icp_fit_score >= 70 %}var(--success){% elif lead.icp_fit_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+        </div>
+      </div>
+
+      <div style="background: var(--neutral-bg); padding: 1rem; border-radius: var(--radius-md); font-size: 0.85rem; line-height: 1.6; white-space: pre-line; color: var(--text-main);">
+        {{ lead.icp_qualification_reasons|default:"Run research to compute qualification reasons." }}
+      </div>
+    </div>
+
+    <!-- Personalized Outreach Angle with Copy button -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="bi bi-send-check" style="color: var(--primary); margin-right: 0.5rem;"></i>Personalized Outreach Angle</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="copyOutreach()" id="copyBtn">
+          <i class="bi bi-clipboard"></i> Copy Email
+        </button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Strictly personalized using verified company capabilities and evidence links. No fabricated personal details or ungrounded claims.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_notes">
+
+        <div class="form-group">
+          <label class="form-label" for="personalized_outreach_subject">Subject Line</label>
+          <input type="text" id="personalized_outreach_subject" name="personalized_outreach_subject" class="form-control" value="{{ lead.personalized_outreach_subject }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="personalized_outreach_angle">Outreach Email Body</label>
+          <textarea id="personalized_outreach_angle" name="personalized_outreach_angle" class="form-control" rows="11" style="font-family: inherit; font-size: 0.9rem; line-height: 1.5;">{{ lead.personalized_outreach_angle }}</textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-floppy"></i> Save Custom Edits
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function copyOutreach() {
+    const subject = document.getElementById('personalized_outreach_subject').value;
+    const body = document.getElementById('personalized_outreach_angle').value;
+    const fullText = `Subject: ${subject}\n\n${body}`;
+
+    navigator.clipboard.writeText(fullText).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy Email';
+      }, 2000);
+    });
+  }
+</script>
+{% endblock %}
+

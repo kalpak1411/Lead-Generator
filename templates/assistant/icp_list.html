@@ -1,0 +1,112 @@
+{% extends "assistant/base.html" %}
+
+{% block title %}Ideal Customer Profiles (ICP) — Lead Research & Qualification{% endblock %}
+{% block header_title %}ICP Definitions{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; font-weight: 800;">Ideal Customer Profiles (ICP)</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Define the target industries, pain points, company sizes, and disqualifying rules used to score incoming leads.</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: start;">
+  <!-- Left Column: Active ICP Cards -->
+  <div>
+    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Active Target Profiles</h3>
+
+    {% for icp in icps %}
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div class="card-header">
+          <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0;">{{ icp.name }}</h4>
+          <span class="badge" style="background: #eef2ff; color: var(--primary);">
+            {{ icp.leads.count }} Lead{{ icp.leads.count|pluralize }} Evaluated
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem;">
+          <div>
+            <strong style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Target Industries:</strong>
+            <span>{{ icp.target_industries }}</span>
+          </div>
+
+          <div>
+            <strong style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Company Size:</strong>
+            <span>{{ icp.target_company_sizes }}</span>
+          </div>
+
+          <div>
+            <strong style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Key Pain Points Solved:</strong>
+            <span>{{ icp.key_pain_points }}</span>
+          </div>
+
+          <div>
+            <strong style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Value Proposition:</strong>
+            <span>{{ icp.value_proposition }}</span>
+          </div>
+
+          {% if icp.disqualifying_signals %}
+            <div>
+              <strong style="color: var(--danger); display: block; font-size: 0.75rem; text-transform: uppercase;">Disqualifying Signals:</strong>
+              <span style="color: var(--text-muted);">{{ icp.disqualifying_signals }}</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="card" style="text-align: center; padding: 3rem 1rem;">
+        <i class="bi bi-bullseye" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block;"></i>
+        <div style="font-weight: 700; font-size: 1.1rem;">No ICP defined yet</div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Create your first Ideal Customer Profile on the right to start scoring leads.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Right Column: Create New ICP Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Define New ICP</h3>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label" for="name">Profile Name *</label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Mid-Market B2B SaaS" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="target_industries">Target Industries (Comma-separated) *</label>
+        <input type="text" id="target_industries" name="target_industries" class="form-control" placeholder="B2B SaaS, Cybersecurity, FinTech, Dev Tools" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="target_company_sizes">Target Company Size</label>
+        <input type="text" id="target_company_sizes" name="target_company_sizes" class="form-control" value="50-500 employees, Series A to C">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="key_pain_points">Key Pain Points Solved *</label>
+        <textarea id="key_pain_points" name="key_pain_points" class="form-control" rows="3" placeholder="e.g. Slow content turnaround, manual sales qualification, compliance audits, pipeline dropoff" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="value_proposition">Core Value Proposition *</label>
+        <textarea id="value_proposition" name="value_proposition" class="form-control" rows="3" placeholder="e.g. accelerate sales velocity by 3x through automated data verification and pipeline orchestration" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="disqualifying_signals">Disqualifying Signals (Negative criteria)</label>
+        <textarea id="disqualifying_signals" name="disqualifying_signals" class="form-control" rows="2" placeholder="e.g. B2C only, physical retail only, student project, inactive website"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="bi bi-plus-circle"></i> Save Ideal Customer Profile
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

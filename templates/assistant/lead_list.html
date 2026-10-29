@@ -1,0 +1,139 @@
+{% extends "assistant/base.html" %}
+
+{% block title %}Lead Directory — Lead Research & Qualification{% endblock %}
+{% block header_title %}Lead Directory{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; font-weight: 800;">Target Accounts & Lead Dossiers</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Filter by qualification fit, industry, or search by domain.</p>
+  </div>
+  <a href="{% url 'lead_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Research New Lead
+  </a>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+  <form method="get" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px;">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search company, URL, contact, or summary...">
+    </div>
+
+    <div style="width: 200px;">
+      <select name="fit" class="form-select">
+        <option value="">All Fit Levels</option>
+        <option value="STRONG" {% if fit_filter == 'STRONG' %}selected{% endif %}>Strong Fit</option>
+        <option value="MODERATE" {% if fit_filter == 'MODERATE' %}selected{% endif %}>Moderate Fit</option>
+        <option value="LOW" {% if fit_filter == 'LOW' %}selected{% endif %}>Low Fit</option>
+        <option value="DISQUALIFIED" {% if fit_filter == 'DISQUALIFIED' %}selected{% endif %}>Disqualified</option>
+        <option value="PENDING" {% if fit_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+      </select>
+    </div>
+
+    <div style="width: 220px;">
+      <select name="icp" class="form-select">
+        <option value="">All ICP Profiles</option>
+        {% for icp in icps %}
+          <option value="{{ icp.id }}" {% if icp_filter == icp.id|stringformat:"s" %}selected{% endif %}>{{ icp.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-secondary">
+      <i class="bi bi-funnel"></i> Filter
+    </button>
+    {% if query or fit_filter or icp_filter %}
+      <a href="{% url 'lead_list' %}" class="btn btn-secondary" title="Clear Filters">
+        <i class="bi bi-x-circle"></i>
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Leads Table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Website & Domain</th>
+          <th>Industry</th>
+          <th>ICP Fit</th>
+          <th>Fit Score</th>
+          <th>Contact Info</th>
+          <th>Researched</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+          <tr>
+            <td>
+              <a href="{% url 'lead_detail' lead.pk %}" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
+                {{ lead.company_name }}
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ lead.business_summary|default:"Summary pending" }}
+              </div>
+            </td>
+            <td>
+              <a href="{{ lead.website_url }}" target="_blank" rel="noopener" style="font-size: 0.85rem; color: var(--secondary);">
+                <i class="bi bi-box-arrow-up-right"></i> {{ lead.website_url|truncatechars:30 }}
+              </a>
+            </td>
+            <td>
+              <span class="badge" style="background: var(--neutral-bg); color: var(--text-muted);">
+                {{ lead.detected_industry|default:"Unclassified" }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-{{ lead.icp_fit_level }}">
+                {{ lead.get_icp_fit_level_display }}
+              </span>
+            </td>
+            <td>
+              <strong>{{ lead.icp_fit_score }}%</strong>
+            </td>
+            <td>
+              {% if lead.supplied_contact_name %}
+                <div style="font-weight: 600; font-size: 0.85rem;">{{ lead.supplied_contact_name }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ lead.supplied_contact_role|default:"" }}</div>
+              {% else %}
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No person supplied</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">
+              {{ lead.last_researched_at|date:"M d, H:i"|default:"Never" }}
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.4rem;">
+                <a href="{% url 'lead_detail' lead.pk %}" class="btn btn-secondary btn-sm" title="View Dossier">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <a href="{% url 'lead_research' lead.pk %}" class="btn btn-primary btn-sm" title="Scrape & Re-analyze">
+                  <i class="bi bi-arrow-repeat"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 3rem 1rem;">
+              <i class="bi bi-inbox" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block;"></i>
+              <div style="font-weight: 700; font-size: 1.1rem;">No matching leads found</div>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">Try modifying your search filters or add a new lead to research.</p>
+              <a href="{% url 'lead_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add New Lead
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

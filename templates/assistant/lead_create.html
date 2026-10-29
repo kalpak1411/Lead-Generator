@@ -1,0 +1,90 @@
+{% extends "assistant/base.html" %}
+
+{% block title %}Research New Lead — Lead Research & Qualification{% endblock %}
+{% block header_title %}New Lead Research{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.6rem; font-weight: 800;">Research & Qualify Target Account</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Enter the company domain and any publicly supplied lead context. The assistant fetches site data, evaluates ICP fit, and drafts an evidence-grounded outreach angle.
+    </p>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label" for="company_name">Company Name *</label>
+          <input type="text" id="company_name" name="company_name" class="form-control" placeholder="e.g. Acme Cloud Security" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="website_url">Company Website URL *</label>
+          <input type="text" id="website_url" name="website_url" class="form-control" placeholder="https://example.com" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="icp">Target Ideal Customer Profile (ICP) *</label>
+        <select id="icp" name="icp" class="form-select" required>
+          {% for icp in icps %}
+            <option value="{{ icp.id }}">{{ icp.name }} (Target: {{ icp.target_industries }})</option>
+          {% empty %}
+            <option value="">No ICP profiles found — Please create an ICP first</option>
+          {% endfor %}
+        </select>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+          Need to configure a new target profile? <a href="{% url 'icp_list' %}">Manage ICPs</a>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 1.25rem;">
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+          Publicly Supplied Contact & Lead Information (Optional)
+        </h4>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+          <i class="bi bi-shield-lock"></i> <strong>Anti-hallucination constraint:</strong> The engine will never invent names, emails, or personal details. Only what you supply here or what is discovered publicly on the website is referenced.
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="supplied_contact_name">Contact Name</label>
+            <input type="text" id="supplied_contact_name" name="supplied_contact_name" class="form-control" placeholder="e.g. Sarah Connor">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="supplied_contact_role">Contact Role / Title</label>
+            <input type="text" id="supplied_contact_role" name="supplied_contact_role" class="form-control" placeholder="e.g. VP of Product">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="supplied_contact_email">Public Email</label>
+            <input type="email" id="supplied_contact_email" name="supplied_contact_email" class="form-control" placeholder="sarah@example.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="supplied_notes">Publicly Supplied Notes / Context</label>
+          <textarea id="supplied_notes" name="supplied_notes" class="form-control" rows="3" placeholder="Any public notes from event roster, press release, or inbound inquiry (e.g. Recently announced Series B; hiring 15 engineers; migrating away from legacy CRM)..."></textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 600;">
+          <input type="checkbox" name="auto_research" checked style="width: 18px; height: 18px;">
+          <span>Automatically scrape website & perform qualification immediately</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-radar"></i> Run Lead Research
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
